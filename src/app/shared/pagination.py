@@ -2,7 +2,7 @@ from typing import Optional, Type, Dict, List, get_origin, Union, get_args
 from typing import TypeVar
 
 from fastapi import Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic.fields import FieldInfo
 
 T = TypeVar("T")
@@ -66,7 +66,6 @@ def extra_filter_fields(**extensions):
     return decorator
 
 
-
 class PaginationRequest(BaseModel):
     limit: int = 50
     offset: int = 0
@@ -79,7 +78,7 @@ class PaginationRequest(BaseModel):
 
 
 class PaginationResultSchema[T](BaseModel):
-    items: tuple[T]
+    items: list[T] = Field(default_factory=list)
     total: int
     limit: int
     offset: int

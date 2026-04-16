@@ -2,15 +2,15 @@ from abc import ABC
 from typing import Any
 from uuid import UUID
 
-from app.interfeces.repository_protocol import RepositoryProtocol
 from app.interfeces.type_aliases import TSchema
+from app.shared.base_repository import RepositoryBase
 from app.shared.pagination import PaginationResultSchema, PaginationRequest
 
 
 class ServiceBase[TModel](ABC):
-    repository: RepositoryProtocol[TModel]
+    repository: RepositoryBase[TModel]
 
-    def __init__(self, repository: RepositoryProtocol[TModel]):
+    def __init__(self, repository: RepositoryBase[TModel]):
         self.repository = repository
 
     async def get_by_id(self, entity_id: str|UUID) -> TModel:

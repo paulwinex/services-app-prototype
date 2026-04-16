@@ -11,8 +11,8 @@ from app.shared.model_mixins import SoftDeleteMixin
 from app.shared.pagination import PaginationResultSchema, PaginationRequest
 
 
-class RepositoryBase[TModel, T_RepositorySchema]:
-    model: type[TModel] = None
+class RepositoryBase[TModel]:
+    model: type[TModel]
 
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -23,7 +23,11 @@ class RepositoryBase[TModel, T_RepositorySchema]:
             raise NotFoundError(detail=f"{self.model.__name__} with id {entity_id} not found")
         return entity
 
-    async def create(self, entity: TModel) -> str:
+    async def create(self, entity: TModel|dict) -> str:
+        if isinstance(entity, dict):
+            entity = self.model(**entity)
+        elif isinstance(entity, BaseModel):
+            entity = self.model(**entity.model_dump(exclude_unset=True))
         self.session.add(entity)
         await self.session.flush([entity])
         return entity.id
@@ -36,10 +40,8 @@ class RepositoryBase[TModel, T_RepositorySchema]:
             .where(self.model.id == entity_id)
             .values(**data)
         )
-        resp = await self.session.execute(stmt)
+        await self.session.execute(stmt)
         await self.session.flush()
-        # return resp
-
 
     async def list(
         self,
@@ -57,7 +59,7 @@ class RepositoryBase[TModel, T_RepositorySchema]:
             stmt = stmt.offset(pagination.offset)
         stmt = stmt.limit(pagination.limit)
         result = await self.session.execute(stmt)
-        models = tuple(result.scalars().all())
+        models = list(result.scalars().all())
         return PaginationResultSchema(
             total=total,
             offset=pagination.offset,
@@ -116,9 +118,6 @@ class RepositoryBase[TModel, T_RepositorySchema]:
                         stmt = stmt.filter(getattr(field_attr, f"__{operator}__")(value))
                     elif operator == "like":
                         stmt = stmt.filter(field_attr.like(f"%{value}%"))
-                    # elif operator == "name":
-                    #     related_model = field_attr.property.mapper.class_
-                    #     stmt = stmt.join(related_model).filter(related_model.name == value)
                     else:
                         raise RequestValueError(detail=f"Unsupported filter operator: {operator}")
                 else:

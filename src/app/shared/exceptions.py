@@ -53,10 +53,17 @@ class ForbiddenError(AppError):
     status_code = HTTPStatus.FORBIDDEN
 
 
+class NoPermissionError(AppError):
+    """No Permission"""
+
+    status_code = HTTPStatus.FORBIDDEN
+
+
 class ValidationError(AppError):
     """Validation error"""
 
     status_code = HTTPStatus.BAD_REQUEST
+
 
 class RequestValueError(AppError):
     """Request value error"""
