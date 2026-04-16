@@ -20,7 +20,7 @@ async def refresh_token(
     request: RefreshTokenRequest,
     service: AuthServiceDEP,
 ) -> TokenResponse:
-    return await service.refresh_access_token(request.refresh_token)
+    return service.refresh_access_token(request.refresh_token)
 
 
 @router.get("/me", response_model=UserResponse)

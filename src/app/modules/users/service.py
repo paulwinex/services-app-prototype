@@ -51,7 +51,11 @@ class UserService(ServiceBase[UserModel]):
     async def change_password(
         self, user_id: str, current_password: str, new_password: str
     ) -> None:
-        user = await self.get_by_id(user_id)
+        user = await self.repository.get_by_id(user_id)
+        if user.is_superuser:
+            from app.shared.exceptions import NoPermissionError
+
+            raise NoPermissionError(detail="Cannot change superuser password")
         if not auth_service.verify_password(current_password, user.password_hash):
             raise InvalidCredentialsError()
         await self.repository.update(
@@ -71,3 +75,11 @@ class UserService(ServiceBase[UserModel]):
             return required_set.issubset(permission_codenames)
         else:
             return bool(required_set & permission_codenames)
+
+    async def delete(self, entity_id: str | UUID) -> None:
+        entity = await self.repository.get_by_id(entity_id)
+        if entity.is_superuser:
+            from app.shared.exceptions import NoPermissionError
+
+            raise NoPermissionError(detail="Cannot delete superuser")
+        await self.repository.delete(entity_id)

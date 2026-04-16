@@ -17,13 +17,22 @@ class RepositoryBase[TModel]:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_by_id(self, entity_id: str|UUID) -> TModel:
-        entity = await self.session.get(self.model, entity_id)
+    async def get_by_id(self, entity_id: str | UUID) -> TModel:
+        if SoftDeleteMixin in self.model.mro():
+            stmt = select(self.model).where(
+                self.model.id == entity_id, self.model.deleted_at.is_(None)
+            )
+            result = await self.session.execute(stmt)
+            entity = result.scalar_one_or_none()
+        else:
+            entity = await self.session.get(self.model, entity_id)
         if not entity:
-            raise NotFoundError(detail=f"{self.model.__name__} with id {entity_id} not found")
+            raise NotFoundError(
+                detail=f"{self.model.__name__} with id {entity_id} not found"
+            )
         return entity
 
-    async def create(self, entity: TModel|dict) -> str:
+    async def create(self, entity: TModel | dict) -> str:
         if isinstance(entity, dict):
             entity = self.model(**entity)
         elif isinstance(entity, BaseModel):
@@ -32,15 +41,18 @@ class RepositoryBase[TModel]:
         await self.session.flush([entity])
         return entity.id
 
-    async def update(self, entity_id: str, data: dict|TModel) -> None:
+    async def update(self, entity_id: str, data: dict | TModel) -> None:
         if isinstance(data, BaseModel):
             data = data.model_dump(exclude_unset=True)
-        stmt = (
-            update(self.model)
-            .where(self.model.id == entity_id)
-            .values(**data)
-        )
-        await self.session.execute(stmt)
+        where_clause = [self.model.id == entity_id]
+        if SoftDeleteMixin in self.model.mro():
+            where_clause.append(self.model.deleted_at.is_(None))
+        stmt = update(self.model).where(*where_clause).values(**data)
+        result = await self.session.execute(stmt)
+        if result.rowcount == 0:
+            raise NotFoundError(
+                detail=f"{self.model.__name__} with id {entity_id} not found"
+            )
         await self.session.flush()
 
     async def list(
@@ -74,17 +86,17 @@ class RepositoryBase[TModel]:
         stmt = self._apply_filters(stmt, filters)
         result = await self.session.execute(stmt)
         return result.scalar_one() or 0
-    
+
     async def count(self, filters: dict[str, Any] | None = None) -> int:
         return await self._count_query(filters)
 
-    async def exists(self, entity_id: str|UUID) -> bool:
+    async def exists(self, entity_id: str | UUID) -> bool:
         try:
             await self.get_by_id(entity_id)
             return True
         except NotFoundError:
             return False
-        
+
     async def delete(self, entity_id: str | UUID) -> None:
         if SoftDeleteMixin in self.model.mro():
             await self.update(entity_id, dict(deleted_at=utcnow()))
@@ -92,7 +104,7 @@ class RepositoryBase[TModel]:
             stmt = delete(self.model).where(self.model.id == entity_id)
             await self.session.execute(stmt)
             await self.session.flush()
-        
+
     def _apply_filters(self, stmt: Select, filters: dict[str, Any] | None) -> Select:
         if not filters or not self.model:
             return stmt
@@ -111,15 +123,23 @@ class RepositoryBase[TModel]:
                     elif operator == "not_in":
                         stmt = stmt.filter(~field_attr.in_(value))
                     elif operator == "is_null":
-                        stmt = stmt.filter(field_attr.is_(None) if value else field_attr.isnot(None))
+                        stmt = stmt.filter(
+                            field_attr.is_(None) if value else field_attr.isnot(None)
+                        )
                     elif operator == "is_not_null":
-                        stmt = stmt.filter(field_attr.isnot(None) if value else field_attr.is_(None))
+                        stmt = stmt.filter(
+                            field_attr.isnot(None) if value else field_attr.is_(None)
+                        )
                     elif operator in ["gt", "lt", "ge", "le"]:
-                        stmt = stmt.filter(getattr(field_attr, f"__{operator}__")(value))
+                        stmt = stmt.filter(
+                            getattr(field_attr, f"__{operator}__")(value)
+                        )
                     elif operator == "like":
                         stmt = stmt.filter(field_attr.like(f"%{value}%"))
                     else:
-                        raise RequestValueError(detail=f"Unsupported filter operator: {operator}")
+                        raise RequestValueError(
+                            detail=f"Unsupported filter operator: {operator}"
+                        )
                 else:
                     raise RequestValueError(detail=f"Invalid filter field: {field}")
             else:
@@ -131,6 +151,9 @@ class RepositoryBase[TModel]:
         order_field = pagination.order_by or "id"
         order_column = getattr(self.model, order_field, None)
         if not order_column:
-            raise RequestValueError(f'Field {order_column} is invalid for model {self.model.__name__}')
-        return stmt.order_by(order_column.desc() if pagination.is_desc else order_column.asc())
-
+            raise RequestValueError(
+                f"Field {order_column} is invalid for model {self.model.__name__}"
+            )
+        return stmt.order_by(
+            order_column.desc() if pagination.is_desc else order_column.asc()
+        )

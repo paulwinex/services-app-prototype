@@ -20,7 +20,7 @@ class ServiceBase[TModel](ABC):
         return await self.repository.create(data)
 
     async def update(self, entity_id: str|UUID, data: TSchema) -> None:
-        await self.repository.update(entity_id, **data)
+        await self.repository.update(entity_id, data)
 
     async def delete(self, entity_id: str|UUID) -> None:
         await self.repository.delete(entity_id)

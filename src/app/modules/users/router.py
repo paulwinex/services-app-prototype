@@ -12,6 +12,7 @@ from app.modules.users.schemas import (
     UserFull,
     UserListResponse,
     UserListFilterRequest,
+    UserPasswordChangeRequest,
 )
 from app.shared.pagination import PaginationRequest
 
@@ -29,6 +30,19 @@ async def list_users(
     service: UserServiceDEP,
 ):
     return await service.list(pagination, filters.model_dump(exclude_unset=True))
+
+
+@router.post(
+    "/{user_id}/change-password",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(has_permissions([UserPermission.CAN_EDIT_USER]))],
+)
+async def change_user_password(
+    user_id: str, payload: UserPasswordChangeRequest, service: UserServiceDEP
+):
+    await service.change_password(
+        user_id, payload.current_password, payload.new_password
+    )
 
 
 @router.get(
