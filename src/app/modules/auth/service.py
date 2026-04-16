@@ -8,7 +8,7 @@ from jose.exceptions import ExpiredSignatureError
 from app.core.settings import get_settings
 from app.modules.auth.schemas import TokenResponse
 from app.modules.users.exceptions import InvalidCredentialsError
-from app.modules.users.schemas import UserResponse
+from app.modules.users.schemas import UserFull
 from app.modules.users.service import UserService
 from app.shared.utils import utcnow
 
@@ -88,12 +88,12 @@ class AuthService:
 
     async def login(self, email: str, password: str) -> TokenResponse:
         user = await self.user_service.authenticate(email, password)
-        await self.user_service.repo.update(user.id, last_login_at=utcnow())
+        await self.user_service.repository.update(user.id, dict(last_login_at=utcnow()))
         return create_auth_token(user.id)
 
-    async def get_current_user(self, token: str) -> UserResponse:
+    async def get_user_by_token(self, token: str) -> UserFull:
         user_id = validate_token(token)
-        return UserResponse.model_validate(await self.user_service.get_by_id(user_id))
+        return UserFull.model_validate(await self.user_service.get_by_id(user_id))
 
     def refresh_access_token(self, refresh_token: str) -> TokenResponse:
         try:
