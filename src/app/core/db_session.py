@@ -2,22 +2,39 @@ from contextlib import asynccontextmanager
 from typing import Annotated, AsyncGenerator, AsyncIterator
 
 from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    AsyncEngine,
+    async_sessionmaker,
+    create_async_engine,
+)
 
 from app.core.settings import get_settings
 
 
 class DatabaseSession:
     def __init__(self, dsn: str = None):
-        self._settings = get_settings()
+        self._settings = None
         self._engine: AsyncEngine | None = None
         self._session_factory: async_sessionmaker[AsyncSession] | None = None
-        self._dsn = dsn or self._settings.DB.dsn
+        self._dsn = dsn
+
+    @property
+    def settings(self):
+        if self._settings is None:
+            self._settings = get_settings()
+        return self._settings
+
+    @property
+    def dsn(self) -> str:
+        if self._dsn is None:
+            return self.settings.DB.dsn
+        return self._dsn
 
     def setup(self) -> None:
         self._engine = create_async_engine(
-            self._dsn,
-            echo=self._settings.DEBUG,
+            self.dsn,
+            echo=self.settings.DEBUG,
             pool_pre_ping=True,
             pool_size=10,
             max_overflow=20,
@@ -60,7 +77,6 @@ async_session = DatabaseSession()
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session.get_session() as session:
         yield session
-
 
 
 SessionDEP = Annotated[AsyncSession, Depends(get_async_session)]
