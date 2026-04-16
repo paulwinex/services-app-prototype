@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from loguru import logger
 from sqlalchemy.exc import DBAPIError
 
-from app.core.exceptions import AppError
+from app.shared.exceptions import AppError
 
 
 def setup_exception_handlers(app: FastAPI) -> None:
