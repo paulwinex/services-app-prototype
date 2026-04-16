@@ -55,6 +55,7 @@ class Settings(BaseSettings):
 
     ADMIN_EMAIL: EmailStr
     ADMIN_PASSWORD: SecretStr
+    ADMIN_PHONE_NUMBER: str
 
 
 @cache
