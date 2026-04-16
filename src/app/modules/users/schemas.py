@@ -32,6 +32,7 @@ class UserCreateRequest(BaseModel):
     password: str
     first_name: str | None = Field(None, max_length=100)
     last_name: str | None = Field(None, max_length=100)
+    is_active: bool = True  # TODO set to false later
 
 
 class UserCreateDB(BaseModel):

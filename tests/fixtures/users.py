@@ -42,7 +42,6 @@ async def regular_user(
     test_settings: Settings, async_db_session: AsyncSession
 ) -> UserModel:
     service = UserService(repository=UserRepository(async_db_session))
-    unique_id = str(uuid.uuid7())[:8]
     email = f.email()
     user_data = dict(
         email=email,

@@ -12,7 +12,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(AppError)
     async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
-        logger.error(f"AppError: {exc.message}", extra={"request": str(request.url)})
+        logger.error(f"AppError: {exc.message} | request={request.url}")
         return JSONResponse(
             status_code=exc.code,
             content={"detail": exc.message, "type": exc.__class__.__name__},
@@ -30,7 +30,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-        logger.exception(f"Unhandled exception: {exc}", extra={"request": str(request.url)})
+        logger.exception(f"Unhandled exception: {exc} | request={request.url}")
         return JSONResponse(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             content={"detail": "Internal server error", "type": exc.__class__.__name__},

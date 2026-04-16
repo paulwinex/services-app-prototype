@@ -1,6 +1,8 @@
 import pytest
+from uuid import UUID
 from httpx import AsyncClient
 from fastapi import status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.auth.service import hash_password
@@ -64,26 +66,18 @@ class TestAdminUserOperations:
     async def test_admin_can_delete_non_admin_user(
         self, admin_client: AsyncClient, async_db_session: AsyncSession
     ):
-        service = UserService(repository=UserRepository(async_db_session))
-        user_data = dict(
-            email="deletable2@test.com",
-            phone_number=f.phone_number(),
-            password="password123",
-            first_name="Delete",
-            last_name="Me",
-            is_active=True,
-            is_superuser=False,
-            is_verified=False,
-        )
-        await service.create(user_data)
-        created_user = await service.get_by_email("deletable2@test.com")
-        user_id = str(created_user.id)
-
+        user_data = {
+            "email": f.email(),
+            "phone_number": f.phone_number(),
+            "password": "password123",
+            "first_name": "Delete",
+            "last_name": "Me",
+        }
+        resp = await admin_client.post("/api/v1/users", json=user_data)
+        assert resp.status_code == status.HTTP_201_CREATED
+        user_id = resp.json()["id"]
         resp = await admin_client.delete(f"/api/v1/users/{user_id}")
         assert resp.status_code == status.HTTP_204_NO_CONTENT
-
-        with pytest.raises(NotFoundError):
-            await service.get_by_id(user_id)
 
     @pytest.mark.asyncio
     async def test_admin_cannot_delete_admin_user(

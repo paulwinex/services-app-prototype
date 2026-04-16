@@ -28,7 +28,7 @@ async def list_groups(
     filters: Annotated[GroupListFilterRequest, Depends()],
     service: GroupServiceDEP,
 ):
-    return await service.list(pagination, filters.model_dump(exclude_unset=True))
+    return await service.get_list(pagination, filters.model_dump(exclude_unset=True))
 
 
 @router.get(
@@ -47,8 +47,7 @@ async def get_group(group_id: str, service: GroupServiceDEP):
     dependencies=[Depends(has_permissions([GroupPermission.CAN_ADD_GROUP]))],
 )
 async def create_group(request: GroupCreateRequest, service: GroupServiceDEP):
-    group_id = await service.create(request)
-    return await service.get_by_id(group_id)
+    return await service.create(request)
 
 
 @router.patch(
@@ -61,8 +60,7 @@ async def update_group(
     request: GroupUpdateRequest,
     service: GroupServiceDEP,
 ):
-    await service.update(group_id, request)
-    return await service.get_by_id(group_id)
+    return await service.update(group_id, request)
 
 
 @router.delete(
@@ -98,4 +96,4 @@ async def remove_user_from_group(group_id: str, user_id: str, service: GroupServ
     dependencies=[Depends(has_permissions([GroupPermission.CAN_VIEW_GROUP]))],
 )
 async def list_user_groups(user_id: str, service: GroupServiceDEP):
-    return await service.get_user_groups(user_id)
+    return await service.list_user_groups(user_id)

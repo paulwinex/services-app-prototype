@@ -3,6 +3,7 @@ from uuid import UUID
 from sqlalchemy import select, delete, exists
 
 from app.modules.groups.models import GroupModel, UserGroupModel, GroupPermissionModel
+from app.modules.groups.schemas import GroupListResponse
 from app.shared.base_repository import RepositoryBase
 
 
@@ -27,10 +28,14 @@ class GroupRepository(RepositoryBase):
         result = await self.session.execute(stmt)
         return result.scalar()
 
-    async def get_user_groups(self, user_id: str | UUID) -> list[GroupModel]:
+    async def get_user_groups(self, user_id: str | UUID) -> GroupListResponse:
         stmt = select(self.model).join(UserGroupModel).where(UserGroupModel.user_id == user_id)
         result = await self.session.execute(stmt)
-        return list(result.scalars().all())
+        groups = list(result.scalars().all())
+        return GroupListResponse(
+            items=groups,
+            total=len(groups),
+        )
 
     async def get_group_users(self, group_id: str | UUID) -> list[UUID]:
         stmt = select(UserGroupModel.user_id).where(UserGroupModel.group_id == group_id)

@@ -45,6 +45,6 @@ def create_app() -> FastAPI:
 
     @app.get("/health", include_in_schema=False)
     async def health_check():
-        return {"status": "healthy", "app": settings.NAME}
+        return {"status": "healthy", "app": settings.APP_NAME}
 
     return app

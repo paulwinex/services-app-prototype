@@ -1,6 +1,8 @@
 from typing import Any
 from uuid import UUID
 
+from pydantic import EmailStr
+
 from app.modules.auth import service as auth_service
 from app.modules.permissions.models import PermissionModel
 from app.modules.users.exceptions import InvalidCredentialsError, UserInactiveError
@@ -8,35 +10,49 @@ from app.modules.users.models import UserModel
 from app.modules.users.repository import UserRepository
 from app.modules.users.schemas import UserCreateRequest, UserCreateDB, UserFull
 from app.shared.base_service import ServiceBase
+from app.shared.exceptions import ConflictError, NoPermissionError
 from app.shared.pagination import PaginationRequest, PaginationResultSchema
 
 
 class UserService(ServiceBase[UserModel]):
     repository: UserRepository
 
-    async def get_by_email(self, email: str) -> UserModel | None:
+    async def get_by_email(self, email: str|EmailStr) -> UserModel | None:
         result = await self.repository.list(
             pagination=PaginationRequest(limit=1),
-            filters={"email": email},
+            filters={"email": str(email)},
         )
         if not result.items:
             return None
         return result.items[0]
 
-    async def create(self, data: UserCreateRequest | dict) -> str:
-        if isinstance(data, dict):
-            data = UserCreateRequest(**data)
-        data = UserCreateDB(
-            **data.model_dump(), password_hash=auth_service.hash_password(data.password)
+    async def get_by_phone_number(self, phone_number: str) -> UserModel | None:
+        result = await self.repository.list(
+            pagination=PaginationRequest(limit=1),
+            filters={"phone_number": phone_number},
         )
-        return await super().create(data)
+        if not result.items:
+            return None
+        return result.items[0]
 
-    async def list(
+    async def get_list(
         self, pagination: PaginationRequest, filters: dict[str, Any] | None = None
     ) -> PaginationResultSchema:
         filters = filters or {}
         filters.setdefault("is_active", True)
-        return await super().list(pagination, filters)
+        return await super().get_list(pagination, filters)
+
+    async def create(self, data: UserCreateRequest | dict) -> UserModel:
+        if isinstance(data, dict):
+            data = UserCreateRequest(**data)
+        if await self.get_by_email(data.email):
+            raise ConflictError(detail=f"User with email {data.email} already exists")
+        if await self.get_by_phone_number(data.phone_number):
+            raise ConflictError(detail="Phone number already exists")
+        data = UserCreateDB(
+            **data.model_dump(), password_hash=auth_service.hash_password(data.password)
+        )
+        return await super().create(data)
 
     async def authenticate(self, email: str, password: str) -> UserModel:
         user = await self.get_by_email(email)
@@ -62,11 +78,11 @@ class UserService(ServiceBase[UserModel]):
             user_id, dict(password_hash=auth_service.hash_password(new_password))
         )
 
-    async def get_permissions(self, user_id: str | UUID) -> list[PermissionModel]:
+    async def get_permissions(self, user_id: str | UUID) -> get_list[PermissionModel]:
         return await self.repository.get_user_permissions(user_id)
 
     async def has_permissions(
-        self, user: UserFull, required_permissions: list[str], method=all
+        self, user: UserFull, required_permissions: get_list[str], method=all
     ) -> bool:
         permissions = await self.get_permissions(user.id)
         permission_codenames = {perm.codename for perm in permissions}
@@ -79,7 +95,5 @@ class UserService(ServiceBase[UserModel]):
     async def delete(self, entity_id: str | UUID) -> None:
         entity = await self.repository.get_by_id(entity_id)
         if entity.is_superuser:
-            from app.shared.exceptions import NoPermissionError
-
             raise NoPermissionError(detail="Cannot delete superuser")
         await self.repository.delete(entity_id)

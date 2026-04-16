@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from fastapi import Query
 from pydantic import BaseModel, Field, ConfigDict
@@ -9,7 +10,7 @@ from app.shared.pagination import PaginationResultSchema, extra_filter_fields
 class GroupResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
+    id: str|UUID
     name: str
     description: str | None = None
     is_system: bool
@@ -21,13 +22,13 @@ class GroupFullResponse(GroupResponse):
 
 
 class GroupCreateRequest(BaseModel):
-    name: str = Field(..., min_length=1, max_length=2048)
-    description: str | None = Field(None, max_length=32)
+    name: str = Field(..., min_length=1, max_length=32)
+    description: str | None = Field(None, max_length=2048)
 
 
 class GroupUpdateRequest(BaseModel):
-    name: str | None = Field(None, min_length=1, max_length=2048)
-    description: str | None = Field(None, max_length=32)
+    name: str | None = Field(None, min_length=1, max_length=32)
+    description: str | None = Field(None, max_length=2048)
 
 
 @extra_filter_fields(

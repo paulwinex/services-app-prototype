@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import UUID
 
 from fastapi import Query
 from pydantic import BaseModel, Field, ConfigDict
@@ -9,7 +10,7 @@ from app.shared.pagination import PaginationResultSchema, extra_filter_fields
 class PermissionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: str
+    id: str|UUID
     name: str
     codename: str
 

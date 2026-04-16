@@ -5,10 +5,11 @@ from pydantic import BaseModel
 from sqlalchemy import select, func, update, delete, Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.shared.utils import utcnow
 from app.shared.exceptions import NotFoundError, RequestValueError
 from app.shared.model_mixins import SoftDeleteMixin
 from app.shared.pagination import PaginationResultSchema, PaginationRequest
+from app.shared.type_aliases import TSchema
+from app.shared.utils import utcnow
 
 
 class RepositoryBase[TModel]:
@@ -18,30 +19,27 @@ class RepositoryBase[TModel]:
         self.session = session
 
     async def get_by_id(self, entity_id: str | UUID) -> TModel:
+        stmt = select(self.model).where(self.model.id == entity_id)
         if SoftDeleteMixin in self.model.mro():
-            stmt = select(self.model).where(
-                self.model.id == entity_id, self.model.deleted_at.is_(None)
-            )
-            result = await self.session.execute(stmt)
-            entity = result.scalar_one_or_none()
-        else:
-            entity = await self.session.get(self.model, entity_id)
+            stmt = stmt.where(self.model.deleted_at.is_(None))
+        result = await self.session.execute(stmt)
+        entity = result.scalar_one_or_none()
         if not entity:
             raise NotFoundError(
                 detail=f"{self.model.__name__} with id {entity_id} not found"
             )
         return entity
 
-    async def create(self, entity: TModel | dict) -> str:
+    async def create(self, entity: dict | TSchema) -> str:
         if isinstance(entity, dict):
             entity = self.model(**entity)
         elif isinstance(entity, BaseModel):
             entity = self.model(**entity.model_dump(exclude_unset=True))
         self.session.add(entity)
         await self.session.flush([entity])
-        return entity.id
+        return entity
 
-    async def update(self, entity_id: str, data: dict | TModel) -> None:
+    async def update(self, entity_id: str, data: dict | TSchema) -> TModel:
         if isinstance(data, BaseModel):
             data = data.model_dump(exclude_unset=True)
         where_clause = [self.model.id == entity_id]
@@ -54,6 +52,9 @@ class RepositoryBase[TModel]:
                 detail=f"{self.model.__name__} with id {entity_id} not found"
             )
         await self.session.flush()
+        obj = await self.get_by_id(entity_id)
+        await self.session.refresh(obj)
+        return obj
 
     async def list(
         self,
@@ -99,11 +100,11 @@ class RepositoryBase[TModel]:
 
     async def delete(self, entity_id: str | UUID) -> None:
         if SoftDeleteMixin in self.model.mro():
-            await self.update(entity_id, dict(deleted_at=utcnow()))
+            stmt = update(self.model).where(self.model.id == entity_id).values(deleted_at=utcnow())
         else:
             stmt = delete(self.model).where(self.model.id == entity_id)
-            await self.session.execute(stmt)
-            await self.session.flush()
+        await self.session.execute(stmt)
+        await self.session.flush()
 
     def _apply_filters(self, stmt: Select, filters: dict[str, Any] | None) -> Select:
         if not filters or not self.model:

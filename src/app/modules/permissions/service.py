@@ -9,6 +9,8 @@ from app.shared.pagination import PaginationRequest, PaginationResultSchema
 
 
 class PermissionService(ServiceBase[PermissionModel]):
+    repository: PermissionRepository
+
     async def get_by_codename(self, codename: str) -> PermissionModel | None:
         result = await self.repository.list(
             pagination=PaginationRequest(limit=1),
@@ -18,19 +20,12 @@ class PermissionService(ServiceBase[PermissionModel]):
             return None
         return result.items[0]
 
-    async def list(self, pagination: PaginationRequest, filters: dict[str, Any] | None = None) -> PaginationResultSchema:
-        return await super().list(pagination, filters)
-
     async def create(self, data: PermissionCreateRequest) -> str:
+        if isinstance(data, dict):
+            data = PermissionCreateRequest.model_validate(data)
         if await self.repository.exists_by_codename(data.codename):
             raise PermissionAlreadyExistsError(f"Permission '{data.codename}' already exists")
-
-        permission = PermissionModel(
-            name=data.name,
-            codename=data.codename,
-        )
-        return await self.repository.create(permission)
+        return await self.repository.create(data)
 
     async def update(self, permission_id: str, data: PermissionUpdateRequest) -> None:
-        await self.repository.get_by_id(permission_id)
-        await self.repository.update(permission_id, data)
+        return await self.repository.update(permission_id, data)

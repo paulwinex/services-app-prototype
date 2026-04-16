@@ -80,7 +80,7 @@ class PaginationRequest(BaseModel):
 class PaginationResultSchema[T](BaseModel):
     items: list[T] = Field(default_factory=list)
     total: int
-    limit: int
-    offset: int
+    limit: int = None
+    offset: int = None
     order_by: str = "id"
     sorting: str = "asc"

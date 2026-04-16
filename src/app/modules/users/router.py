@@ -29,7 +29,7 @@ async def list_users(
     filters: Annotated[UserListFilterRequest, Depends()],
     service: UserServiceDEP,
 ):
-    return await service.list(pagination, filters.model_dump(exclude_unset=True))
+    return await service.get_list(pagination, filters.model_dump(exclude_unset=True))
 
 
 @router.post(
@@ -61,8 +61,7 @@ async def get_user(user_id: str, service: UserServiceDEP):
     dependencies=[Depends(has_permissions([UserPermission.CAN_ADD_USER]))],
 )
 async def create_user(request: UserCreateRequest, service: UserServiceDEP):
-    user_id = await service.create(request)
-    return await service.get_by_id(user_id)
+    return await service.create(request)
 
 
 @router.patch(
@@ -73,8 +72,7 @@ async def create_user(request: UserCreateRequest, service: UserServiceDEP):
 async def update_user(
     user_id: str, payload: UserUpdateRequest, service: UserServiceDEP
 ):
-    await service.update(user_id, payload)
-    return await service.get_by_id(user_id)
+    return await service.update(user_id, payload)
 
 
 @router.delete(

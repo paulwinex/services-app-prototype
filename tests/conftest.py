@@ -1,6 +1,7 @@
 from typing import AsyncGenerator
 
 import pytest_asyncio
+from sqlalchemy import text
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
@@ -29,7 +30,6 @@ async def create_test_tables(test_settings: Settings):
 async def async_db_session(
     test_settings: Settings,
 ) -> AsyncGenerator[AsyncSession, None]:
-    # Create a separate engine for testing
     test_dsn = test_settings.DB.dsn
     engine = create_async_engine(test_dsn, echo=False)
     session_factory = async_sessionmaker(
@@ -37,6 +37,7 @@ async def async_db_session(
     )
 
     async with session_factory() as session:
+        await session.commit()
         try:
             yield session
             await session.commit()

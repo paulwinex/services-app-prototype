@@ -28,7 +28,7 @@ async def list_permissions(
     filters: Annotated[PermissionListFilterRequest, Depends()],
     service: PermissionServiceDEP,
 ):
-    return await service.list(pagination, filters.model_dump(exclude_unset=True))
+    return await service.get_list(pagination, filters.model_dump(exclude_unset=True))
 
 
 @router.get(
@@ -47,8 +47,7 @@ async def get_permission(permission_id: str, service: PermissionServiceDEP):
     dependencies=[Depends(has_permissions([PermissionPermission.CAN_ADD_PERMISSION]))],
 )
 async def create_permission(request: PermissionCreateRequest, service: PermissionServiceDEP):
-    permission_id = await service.create(request)
-    return await service.get_by_id(permission_id)
+    return await service.create(request)
 
 
 @router.patch(
@@ -61,8 +60,7 @@ async def update_permission(
     request: PermissionUpdateRequest,
     service: PermissionServiceDEP,
 ):
-    await service.update(permission_id, request)
-    return await service.get_by_id(permission_id)
+    return await service.update(permission_id, request)
 
 
 @router.delete(
