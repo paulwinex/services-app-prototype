@@ -39,7 +39,9 @@ class GroupUpdateRequest(BaseModel):
     like=("name", "description"),
 )
 class GroupListFilterRequest(BaseModel):
+    id: str | None = Query(None, description="Filter by id")
     name: str | None = Query(None, description="Filter by name")
+    description: str | None = Query(None, description="Filter by description")
     is_system: bool | None = Query(None, description="Filter by system flag")
     created_at: datetime | None = Query(None, description="Filter by creation time")
 
