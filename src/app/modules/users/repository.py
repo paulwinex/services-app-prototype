@@ -1,5 +1,9 @@
+from uuid import UUID
+
 from sqlalchemy import select
 
+from app.modules.groups.models import GroupPermissionModel, UserGroupModel
+from app.modules.permissions.models import PermissionModel
 from app.modules.users.models import UserModel
 from app.shared.base_repository import RepositoryBase
 
@@ -21,3 +25,20 @@ class UserRepository(RepositoryBase):
         stmt = select(UserModel).where(UserModel.is_superuser == True)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
+
+    async def get_user_permissions(self, user_id: str | UUID) -> list[PermissionModel]:
+        user_uuid = UUID(user_id) if isinstance(user_id, str) else user_id
+        stmt = (
+            select(PermissionModel)
+            .join(
+                GroupPermissionModel,
+                GroupPermissionModel.permission_id == PermissionModel.id,
+            )
+            .join(
+                UserGroupModel, UserGroupModel.group_id == GroupPermissionModel.group_id
+            )
+            .where(UserGroupModel.user_id == user_uuid)
+            .distinct()
+        )
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
