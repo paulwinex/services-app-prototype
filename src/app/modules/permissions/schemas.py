@@ -37,7 +37,9 @@ class PermissionUpdateRequest(BaseModel):
     like=("name", "codename"),
 )
 class PermissionListFilterRequest(BaseModel):
+    id: str | None = Query(None, description="Filter by id")
     name: str | None = Query(None, description="Filter by name")
+    codename: str | None = Query(None, description="Filter by codename")
     created_at: datetime | None = Query(None, description="Filter by creation time")
 
 
