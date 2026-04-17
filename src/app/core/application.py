@@ -11,7 +11,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
 
     app = FastAPI(
-        title=settings.APP_NAME,
+        title=settings.NAME,
         version='0.0.1',
         lifespan=lifespan,
         docs_url="/docs",
@@ -35,8 +35,8 @@ def create_app() -> FastAPI:
         from app import __version__
         base_url = str(request.base_url).rstrip("/")
         app_info_dict = {
-            "app_name": "SequoiaAi",
-            "description": "SequoiaAi App Backend",
+            "app_name": settings.NAME,
+            "description": settings.DESCRIPTION,
             "version": __version__,
             "swagger": f"{base_url}/docs",
             "redoc": f"{base_url}/redoc"
@@ -45,6 +45,6 @@ def create_app() -> FastAPI:
 
     @app.get("/health", include_in_schema=False)
     async def health_check():
-        return {"status": "healthy", "app": settings.APP_NAME}
+        return {"status": "healthy", "app": settings.NAME}
 
     return app

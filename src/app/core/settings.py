@@ -45,7 +45,8 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    APP_NAME: str = Field(default="NoName")
+    NAME: str = Field(default="NoName")
+    DESCRIPTION: str = Field(default="No Description")
     DEBUG: bool = False
     DEFAULT_PORT: int = 8000
     DEFAULT_HOST: str = "0.0.0.0"

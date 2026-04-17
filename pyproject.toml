@@ -1,7 +1,10 @@
 [project]
-name = "sequoia-backend"
-version = "0.1.0"
-description = "SequoiaAI App Backend"
+# set actial name
+name = "backend"
+# change version
+version = "0.0.0"
+# set actual description
+description = "App Backend"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
