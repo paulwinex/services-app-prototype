@@ -36,6 +36,13 @@ class DatabaseSettings(BaseSettings):
         )
 
 
+class EventsSettings(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="APP_EVENTS_")
+
+    URL: str = "nats://localhost:4222"
+    ENABLE: bool = True
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="APP_",
@@ -53,6 +60,7 @@ class Settings(BaseSettings):
 
     AUTH: AuthSettings = Field(default_factory=AuthSettings)
     DB: DatabaseSettings = Field(default_factory=DatabaseSettings)
+    EVENTS: EventsSettings = Field(default_factory=EventsSettings)
 
     ADMIN_EMAIL: EmailStr
     ADMIN_PASSWORD: SecretStr

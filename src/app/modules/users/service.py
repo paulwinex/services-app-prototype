@@ -8,7 +8,7 @@ from app.modules.permissions.models import PermissionModel
 from app.modules.users.exceptions import InvalidCredentialsError, UserInactiveError
 from app.modules.users.models import UserModel
 from app.modules.users.repository import UserRepository
-from app.modules.users.schemas import UserCreateRequest, UserCreateDB, UserSchema
+from app.modules.users.schemas import UserCreateRequest, UserCreateDB, UserSchema, SuperUserCreateSchema
 from app.shared.base_service import ServiceBase
 from app.shared.exceptions import ConflictError, NoPermissionError
 from app.shared.pagination import PaginationRequest, PaginationResultSchema

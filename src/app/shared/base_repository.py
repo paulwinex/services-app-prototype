@@ -5,10 +5,10 @@ from pydantic import BaseModel
 from sqlalchemy import select, func, update, delete, Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.events import on_model_create, on_model_delete, on_model_update
 from app.shared.exceptions import NotFoundError, RequestValueError
 from app.shared.model_mixins import SoftDeleteMixin
 from app.shared.pagination import PaginationResultSchema, PaginationRequest
-from app.shared.type_aliases import TSchema
 from app.shared.utils import utcnow
 
 
@@ -38,6 +38,7 @@ class RepositoryBase[TModel, TSchema]:
             entity = self.model(**entity.model_dump(exclude_unset=True))
         self.session.add(entity)
         await self.session.flush([entity])
+        await on_model_create(entity)
         return self.response_schema.model_validate(entity)
 
     async def update(self, entity_id: str, data: dict | BaseModel) -> TSchema:
@@ -56,6 +57,7 @@ class RepositoryBase[TModel, TSchema]:
         stmt = select(self.model).where(self.model.id == entity_id)
         obj = (await self.session.execute(stmt)).scalar_one_or_none()
         await self.session.refresh(obj)
+        await on_model_update(obj)
         return self.response_schema.model_validate(obj)
 
     async def list(
@@ -120,6 +122,7 @@ class RepositoryBase[TModel, TSchema]:
             stmt = delete(self.model).where(self.model.id == entity_id)
         await self.session.execute(stmt)
         await self.session.flush()
+        await on_model_delete(self.session, entity)
 
     def _apply_filters(self, stmt: Select, filters: dict[str, Any] | None) -> Select:
         if not filters or not self.model:

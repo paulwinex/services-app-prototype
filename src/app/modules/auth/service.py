@@ -6,6 +6,7 @@ from jose import jwt, JWTError
 from jose.exceptions import ExpiredSignatureError
 
 from app.core.settings import get_settings
+from app.modules.users.events import on_user_logged_in
 from app.modules.auth.schemas import TokenResponse
 from app.modules.users.exceptions import InvalidCredentialsError
 from app.modules.users.schemas import UserSchema
@@ -88,6 +89,7 @@ class AuthService:
 
     async def login(self, email: str, password: str) -> TokenResponse:
         user = await self.user_service.authenticate(email, password)
+        await on_user_logged_in(user)
         await self.user_service.repository.update(user.id, dict(last_login_at=utcnow()))
         return create_auth_token(user.id)
 
