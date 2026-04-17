@@ -1,3 +1,5 @@
 #!/bin/bash
 
-exec uvicorn app.main:create_app --port 8000 ${DEBUG:+--reload}
+alembic upgrade head
+
+exec uvicorn app.main:create_app --host 0.0.0.0 --port 8000 ${DEBUG:+--reload}

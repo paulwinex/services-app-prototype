@@ -46,11 +46,9 @@ async def _init_superuser(session: AsyncSession):
         logger.info(f"User with email {settings.ADMIN_EMAIL} already exists")
         return
 
-    password_hash = hash_password(settings.ADMIN_PASSWORD.get_secret_value())
-
     user_data = dict(
         email=settings.ADMIN_EMAIL,
-        password_hash=password_hash,
+        password=settings.ADMIN_PASSWORD.get_secret_value(),
         phone_number=settings.ADMIN_PHONE_NUMBER,
         first_name="Super",
         last_name="Admin",

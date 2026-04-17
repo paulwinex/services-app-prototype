@@ -27,7 +27,10 @@ class UserRepository(RepositoryBase):
     async def get_super_user(self) -> UserSchema | None:
         stmt = select(UserModel).where(UserModel.is_superuser == True)
         result = await self.session.execute(stmt)
-        return self.response_schema.model_validate(result.scalar_one_or_none())
+        obj = result.scalar_one_or_none()
+        if obj is not None:
+            return self.response_schema.model_validate(obj)
+        return None
 
     async def get_user_permissions(self, user_id: str | UUID) -> list[PermissionSchema]:
         user_uuid = UUID(user_id) if isinstance(user_id, str) else user_id

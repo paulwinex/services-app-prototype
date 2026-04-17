@@ -1,0 +1,48 @@
+services:
+  app:
+    image: ${APP_NAME}-app:testing
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      target: testing-image
+      args:
+        INSTALL_DEV: "true"
+    container_name: "${APP_NAME}-app-testing"
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    env_file:
+      - ../.env
+    environment:
+      APP_DB_HOST: "${APP_NAME}-db-testing"
+      TESTING: "true"
+      APP_DB_USER: "test"
+      APP_DB_PASSWORD: "test"
+      APP_DB_NAME: "test"
+    volumes:
+      - ../src:/app/src
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+
+  db:
+    image: postgres:17
+    container_name: "${APP_NAME}-db-testing"
+    env_file:
+      - ../.env
+    environment:
+      POSTGRES_USER: "test"
+      POSTGRES_PASSWORD: "test"
+      POSTGRES_DB: "test"
+    expose:
+      - 5432
+    tmpfs:
+      - /var/lib/postgresql/data
+    restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test -d test"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 3s
