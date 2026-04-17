@@ -2,3 +2,4 @@
 .venv
 .*/
 compose.override.yml
+data/

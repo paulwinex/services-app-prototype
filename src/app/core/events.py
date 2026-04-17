@@ -3,39 +3,29 @@ from typing import Any
 from loguru import logger
 from sqlalchemy import inspect
 
-from app.events.router import get_event_router
+from app.events.router import event
 from app.events.schemas import ModelEvent
-from app.shared.utils import events_enabled
 
 
-async def _emit_model_event(obj: Any, event_type: str) -> None:
-    router = get_event_router()
-    if hasattr(obj, "id"):
-        obj_id = str(obj.id)
-    else:
-        return
+def _get_model_data(obj: Any) -> Any:
     mapper = inspect(obj.__class__)
-    model_name = mapper.local_table.name
-
-    event = ModelEvent(model_name=model_name, object_id=obj_id, event_type=event_type)
-    await router.broker.publish(event.model_dump(mode='json'), subject=f"model.{model_name}.{event_type}")
+    return mapper.local_table.name
 
 
-@events_enabled
-async def on_model_create(obj: Any) -> None:
+@event('model.created')
+async def on_model_create(obj: Any) -> ModelEvent:
     logger.debug(f'Model created event {obj}')
-    await _emit_model_event(obj, "create")
+    return ModelEvent(model_name=_get_model_data(obj), object_id=obj.id, event_type="create")
 
 
-@events_enabled
-async def on_model_update(obj: Any) -> None:
+
+@event('model.updated')
+async def on_model_update(obj: Any) -> ModelEvent:
     logger.debug(f'Model update event {obj}')
-    await _emit_model_event(obj, "update")
+    return ModelEvent(model_name=_get_model_data(obj), object_id=obj.id, event_type="update")
 
 
-@events_enabled
-async def on_model_delete(obj: Any) -> None:
+@event('model.deleted')
+async def on_model_delete(obj: Any) -> ModelEvent:
     logger.debug(f'Model delete event {obj}')
-    await _emit_model_event(obj, "delete")
-
-
+    return ModelEvent(model_name=_get_model_data(obj), object_id=obj.id, event_type="delete")

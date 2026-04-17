@@ -18,6 +18,8 @@ services:
       db:
         condition: service_healthy
     restart: always
+    networks:
+      - default
 
   db:
     image: postgres:17
@@ -33,9 +35,29 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     restart: always
+    networks:
+      - default
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${APP_DB_USER} -d ${APP_DB_NAME}"]
       interval: 5s
       timeout: 3s
       retries: 3
       start_period: 3s
+
+  nats:
+    image: nats:alpine
+    container_name: "${APP_NAME}-nats"
+    command: ["nats-server", "--cluster", "nats://0.0.0.0:6222", "--http_port", "8222"]
+    expose:
+      - 4222
+      - 6222
+      - 8222
+    ports:
+      - "${APP_NATS_PORT:-4222}:4222"
+      - "${APP_NATS_MONITORING_PORT:-8222}:8222"
+    restart: always
+    networks:
+      - default
+
+networks:
+  default:

@@ -13,7 +13,7 @@ class BaseEvent(BaseModel):
 
 class ModelEvent(BaseEvent):
     model_name: str
-    object_id: str
+    object_id: str|UUID
     event_type: str = None
 
 

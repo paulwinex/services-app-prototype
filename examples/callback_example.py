@@ -8,18 +8,17 @@ from app.modules.users.schemas import UserEvent
 router = get_event_router()
 
 
-logger.info('Setup callbacks...')
-@router.subscriber("model.*.create")
+@router.subscriber("model.created")
 async def on_model_create(event: ModelEvent, log: Logger) -> None:
     log.info(f"Model created: {event.model_name} with id {event.object_id}")
 
 
-@router.subscriber("model.*.update")
+@router.subscriber("model.updated")
 async def on_model_update(event: ModelEvent, log: Logger) -> None:
     log.info(f"Model updated: {event.model_name} with id {event.object_id}")
 
 
-@router.subscriber("model.*.delete")
+@router.subscriber("model.deleted")
 async def on_model_delete(event: ModelEvent, log: Logger) -> None:
     log.info(f"Model deleted: {event.model_name} with id {event.object_id}")
 

@@ -6,7 +6,7 @@ from jose import jwt, JWTError
 from jose.exceptions import ExpiredSignatureError
 
 from app.core.settings import get_settings
-from app.modules.users.events import on_user_logged_in
+from app.modules.auth.events import on_user_logged_in
 from app.modules.auth.schemas import TokenResponse
 from app.modules.users.exceptions import InvalidCredentialsError
 from app.modules.users.schemas import UserSchema

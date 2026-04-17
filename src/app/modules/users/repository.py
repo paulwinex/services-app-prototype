@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from loguru import logger
 from sqlalchemy import select
 
 from app.modules.groups.models import GroupPermissionModel, UserGroupModel
