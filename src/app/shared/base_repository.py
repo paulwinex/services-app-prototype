@@ -12,13 +12,14 @@ from app.shared.type_aliases import TSchema
 from app.shared.utils import utcnow
 
 
-class RepositoryBase[TModel]:
+class RepositoryBase[TModel, TSchema]:
     model: type[TModel]
+    response_schema: type[TSchema]
 
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_by_id(self, entity_id: str | UUID) -> TModel:
+    async def get_by_id(self, entity_id: str | UUID) -> TSchema:
         stmt = select(self.model).where(self.model.id == entity_id)
         if SoftDeleteMixin in self.model.mro():
             stmt = stmt.where(self.model.deleted_at.is_(None))
@@ -28,18 +29,18 @@ class RepositoryBase[TModel]:
             raise NotFoundError(
                 detail=f"{self.model.__name__} with id {entity_id} not found"
             )
-        return entity
+        return self.response_schema.model_validate(entity)
 
-    async def create(self, entity: dict | TSchema) -> str:
+    async def create(self, entity: dict | BaseModel) -> TSchema:
         if isinstance(entity, dict):
             entity = self.model(**entity)
         elif isinstance(entity, BaseModel):
             entity = self.model(**entity.model_dump(exclude_unset=True))
         self.session.add(entity)
         await self.session.flush([entity])
-        return entity
+        return self.response_schema.model_validate(entity)
 
-    async def update(self, entity_id: str, data: dict | TSchema) -> TModel:
+    async def update(self, entity_id: str, data: dict | BaseModel) -> TSchema:
         if isinstance(data, BaseModel):
             data = data.model_dump(exclude_unset=True)
         where_clause = [self.model.id == entity_id]
@@ -52,9 +53,10 @@ class RepositoryBase[TModel]:
                 detail=f"{self.model.__name__} with id {entity_id} not found"
             )
         await self.session.flush()
-        obj = await self.get_by_id(entity_id)
+        stmt = select(self.model).where(self.model.id == entity_id)
+        obj = (await self.session.execute(stmt)).scalar_one_or_none()
         await self.session.refresh(obj)
-        return obj
+        return self.response_schema.model_validate(obj)
 
     async def list(
         self,
@@ -72,12 +74,12 @@ class RepositoryBase[TModel]:
             stmt = stmt.offset(pagination.offset)
         stmt = stmt.limit(pagination.limit)
         result = await self.session.execute(stmt)
-        models = list(result.scalars().all())
+        models = [self.response_schema.model_validate(obj) for obj in result.scalars().all()]
         return PaginationResultSchema(
+            items=models,
             total=total,
             offset=pagination.offset,
             limit=pagination.limit,
-            items=models,
             order_by=pagination.order_by,
             sorting=pagination.sorting,
         )

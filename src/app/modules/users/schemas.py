@@ -17,7 +17,8 @@ class UserResponse(BaseModel):
     last_name: str | None = None
 
 
-class UserFull(UserResponse):
+class UserSchema(UserResponse):
+    password_hash: str | None = None
     created_at: datetime
     updated_at: datetime | None = None
     last_login_at: datetime | None = None

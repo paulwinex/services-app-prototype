@@ -7,6 +7,17 @@ from pydantic import BaseModel, Field, ConfigDict
 from app.shared.pagination import PaginationResultSchema, extra_filter_fields
 
 
+class GroupSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str|UUID
+    name: str
+    description: str | None = None
+    is_system: bool
+    created_at: datetime
+    updated_at: datetime
+
+
 class GroupResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -39,7 +50,7 @@ class GroupUpdateRequest(BaseModel):
     le=("created_at",),
     like=("name", "description"),
 )
-class GroupListFilterRequest(BaseModel):
+class GroupListFilterQuery(BaseModel):
     id: str | None = Query(None, description="Filter by id")
     name: str | None = Query(None, description="Filter by name")
     description: str | None = Query(None, description="Filter by description")

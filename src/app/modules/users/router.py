@@ -9,7 +9,7 @@ from app.modules.users.schemas import (
     UserCreateRequest,
     UserUpdateRequest,
     UserResponse,
-    UserFull,
+    UserSchema,
     UserListResponse,
     UserListFilterRequest,
     UserPasswordChangeRequest,
@@ -47,7 +47,7 @@ async def change_user_password(
 
 @router.get(
     "/{user_id}",
-    response_model=UserFull,
+    response_model=UserResponse,
     dependencies=[Depends(has_permissions([UserPermission.CAN_VIEW_USER]))],
 )
 async def get_user(user_id: str, service: UserServiceDEP):

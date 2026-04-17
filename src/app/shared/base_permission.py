@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import TypeVar, Self
 
-T = TypeVar("T", bound="PermissionsBase")
+# T = TypeVar("T", bound="PermissionsBase")
 
 
 class PermissionsBase(StrEnum):

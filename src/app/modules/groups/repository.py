@@ -3,12 +3,13 @@ from uuid import UUID
 from sqlalchemy import select, delete, exists
 
 from app.modules.groups.models import GroupModel, UserGroupModel, GroupPermissionModel
-from app.modules.groups.schemas import GroupListResponse
+from app.modules.groups.schemas import GroupListResponse, GroupSchema
 from app.shared.base_repository import RepositoryBase
 
 
-class GroupRepository(RepositoryBase):
+class GroupRepository(RepositoryBase[GroupModel, GroupSchema]):
     model = GroupModel
+    response_schema = GroupSchema
 
     async def get_by_name(self, name: str) -> GroupModel | None:
         stmt = select(self.model).where(self.model.name == name)

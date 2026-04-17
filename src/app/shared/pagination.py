@@ -1,12 +1,8 @@
 from typing import Optional, Type, Dict, List, get_origin, Union, get_args
-from typing import TypeVar
 
 from fastapi import Query
 from pydantic import BaseModel, Field
 from pydantic.fields import FieldInfo
-
-T = TypeVar("T")
-
 
 
 def _get_wrapped_type(tp):

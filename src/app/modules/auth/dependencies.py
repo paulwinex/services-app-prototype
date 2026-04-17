@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from app.modules.auth.service import AuthService
 from app.modules.users.dependencies import UserServiceDEP
-from app.modules.users.schemas import UserResponse, UserFull
+from app.modules.users.schemas import UserResponse, UserSchema
 from app.shared.exceptions import NotFoundError, NoPermissionError
 from app.shared.exceptions import UnauthorizedError
 
@@ -19,16 +19,16 @@ def get_auth_service(user_service: UserServiceDEP) -> AuthService:
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
     service: AuthService = Depends(get_auth_service),
-) -> UserFull:
+) -> UserSchema:
     if not token:
         raise UnauthorizedError()
     user = await service.get_user_by_token(token)
     if not user:
         raise NotFoundError
-    return UserFull.model_validate(user)
+    return UserSchema.model_validate(user)
 
 
-async def get_active_user(user: UserFull = Depends(get_current_user)) -> UserFull:
+async def get_active_user(user: UserSchema = Depends(get_current_user)) -> UserSchema:
     if not user.is_active:
         raise UnauthorizedError()
     return user
@@ -40,7 +40,7 @@ def has_permissions(required_permissions: list, method: Callable|None = None) ->
 
     async def dependency(
         user_service: UserServiceDEP,
-        user: UserFull = Depends(get_current_user),
+        user: UserSchema = Depends(get_current_user),
     ):
         permission_list = tuple(str(p) for p in required_permissions)
         if user.is_superuser:

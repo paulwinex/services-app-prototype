@@ -8,7 +8,7 @@ from app.modules.permissions.models import PermissionModel
 from app.modules.users.exceptions import InvalidCredentialsError, UserInactiveError
 from app.modules.users.models import UserModel
 from app.modules.users.repository import UserRepository
-from app.modules.users.schemas import UserCreateRequest, UserCreateDB, UserFull
+from app.modules.users.schemas import UserCreateRequest, UserCreateDB, UserSchema
 from app.shared.base_service import ServiceBase
 from app.shared.exceptions import ConflictError, NoPermissionError
 from app.shared.pagination import PaginationRequest, PaginationResultSchema
@@ -17,7 +17,7 @@ from app.shared.pagination import PaginationRequest, PaginationResultSchema
 class UserService(ServiceBase[UserModel]):
     repository: UserRepository
 
-    async def get_by_email(self, email: str|EmailStr) -> UserModel | None:
+    async def get_by_email(self, email: str|EmailStr) -> UserSchema | None:
         result = await self.repository.list(
             pagination=PaginationRequest(limit=1),
             filters={"email": str(email)},
@@ -26,7 +26,7 @@ class UserService(ServiceBase[UserModel]):
             return None
         return result.items[0]
 
-    async def get_by_phone_number(self, phone_number: str) -> UserModel | None:
+    async def get_by_phone_number(self, phone_number: str) -> UserSchema | None:
         result = await self.repository.list(
             pagination=PaginationRequest(limit=1),
             filters={"phone_number": phone_number},
@@ -42,7 +42,7 @@ class UserService(ServiceBase[UserModel]):
         filters.setdefault("is_active", True)
         return await super().get_list(pagination, filters)
 
-    async def create(self, data: UserCreateRequest | dict) -> UserModel:
+    async def create(self, data: UserCreateRequest | dict) -> UserSchema:
         if isinstance(data, dict):
             data = UserCreateRequest(**data)
         if await self.get_by_email(data.email):
@@ -54,7 +54,7 @@ class UserService(ServiceBase[UserModel]):
         )
         return await super().create(data)
 
-    async def authenticate(self, email: str, password: str) -> UserModel:
+    async def authenticate(self, email: str, password: str) -> UserSchema:
         user = await self.get_by_email(email)
         if not user:
             raise InvalidCredentialsError()
@@ -82,7 +82,7 @@ class UserService(ServiceBase[UserModel]):
         return await self.repository.get_user_permissions(user_id)
 
     async def has_permissions(
-        self, user: UserFull, required_permissions: get_list[str], method=all
+        self, user: UserSchema, required_permissions: get_list[str], method=all
     ) -> bool:
         permissions = await self.get_permissions(user.id)
         permission_codenames = {perm.codename for perm in permissions}

@@ -7,6 +7,16 @@ from pydantic import BaseModel, Field, ConfigDict
 from app.shared.pagination import PaginationResultSchema, extra_filter_fields
 
 
+class PermissionSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str | UUID
+    name: str
+    codename: str
+    created_at: datetime
+    updated_at: datetime | None = None
+
+
 class PermissionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

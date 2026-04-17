@@ -1,27 +1,27 @@
 from typing import Any
 from uuid import UUID
 
-from app.modules.groups.models import GroupModel
-from app.modules.groups.schemas import (
-    GroupCreateRequest,
-    GroupUpdateRequest,
-    GroupListResponse,
-)
-from app.modules.groups.repository import GroupRepository
 from app.modules.groups.exceptions import (
     GroupAlreadyExistsError,
     SuperUserGroupError,
     UserAlreadyInGroupError,
     UserNotInGroupError,
 )
+from app.modules.groups.models import GroupModel
+from app.modules.groups.repository import GroupRepository
+from app.modules.groups.schemas import (
+    GroupCreateRequest,
+    GroupUpdateRequest,
+    GroupListResponse, GroupSchema,
+)
 from app.shared.base_service import ServiceBase
 from app.shared.pagination import PaginationRequest, PaginationResultSchema
 
 
-class GroupService(ServiceBase[GroupModel]):
+class GroupService(ServiceBase[GroupSchema]):
     repository: GroupRepository
 
-    async def get_by_name(self, name: str) -> GroupModel | None:
+    async def get_by_name(self, name: str) -> GroupSchema | None:
         result = await self.repository.list(
             pagination=PaginationRequest(limit=1),
             filters={"name": name},
@@ -35,13 +35,13 @@ class GroupService(ServiceBase[GroupModel]):
     ) -> PaginationResultSchema:
         return await super().get_list(pagination, filters)
 
-    async def create(self, data: GroupCreateRequest) -> str:
+    async def create(self, data: GroupCreateRequest) -> GroupSchema:
         if await self.repository.exists_by_name(data.name):
             raise GroupAlreadyExistsError(f"Group '{data.name}' already exists")
         return await self.repository.create(data)
 
-    async def update(self, group_id: str | UUID, data: GroupUpdateRequest) -> GroupModel:
-        group = await self.repository.get_by_id(group_id)
+    async def update(self, group_id: str | UUID, data: GroupUpdateRequest) -> GroupSchema:
+        group: GroupSchema = await self.repository.get_by_id(group_id)
         if data.name and data.name != group.name:
             if await self.repository.exists_by_name(data.name):
                 raise GroupAlreadyExistsError(f"Group '{data.name}' already exists")
@@ -53,16 +53,12 @@ class GroupService(ServiceBase[GroupModel]):
             raise SuperUserGroupError("Cannot delete system group")
         await self.repository.delete(group_id)
 
-    async def add_user_to_group(
-        self, user_id: str | UUID, group_id: str | UUID
-    ) -> None:
+    async def add_user_to_group(self, user_id: str | UUID, group_id: str | UUID) -> None:
         if await self.repository.user_in_group(user_id, group_id):
             raise UserAlreadyInGroupError(f"User {user_id} already in group {group_id}")
         await self.repository.add_user_to_group(user_id, group_id)
 
-    async def remove_user_from_group(
-        self, user_id: str | UUID, group_id: str | UUID
-    ) -> None:
+    async def remove_user_from_group(self, user_id: str | UUID, group_id: str | UUID) -> None:
         if not await self.repository.user_in_group(user_id, group_id):
             raise UserNotInGroupError(f"User {user_id} not in group {group_id}")
         # TODO disable edit super admin

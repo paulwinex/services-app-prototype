@@ -11,7 +11,7 @@ from app.modules.groups.schemas import (
     GroupResponse,
     GroupFullResponse,
     GroupListResponse,
-    GroupListFilterRequest,
+    GroupListFilterQuery,
 )
 from app.shared.pagination import PaginationRequest
 
@@ -25,7 +25,7 @@ router = APIRouter()
 )
 async def list_groups(
     pagination: Annotated[PaginationRequest, Depends()],
-    filters: Annotated[GroupListFilterRequest, Depends()],
+    filters: Annotated[GroupListFilterQuery, Depends()],
     service: GroupServiceDEP,
 ):
     return await service.get_list(pagination, filters.model_dump(exclude_unset=True))

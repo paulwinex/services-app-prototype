@@ -21,4 +21,4 @@ mig-apply:
 # run tests
 [working-directory: '.']
 test args="":
-    uv run pytest -s -v -x {{args}}
+    uv run pytest -v -x {{args}}
