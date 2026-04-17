@@ -9,12 +9,12 @@ run:
 
 # create migrations
 [working-directory: 'src']
-mig-create message:
+makemigrations message:
     uv run alembic revision --autogenerate -m "{{message}}"
 
 # apply migrations
 [working-directory: 'src']
-mig-apply:
+applymigrations:
     uv run alembic upgrade head
 
 
@@ -22,3 +22,4 @@ mig-apply:
 [working-directory: '.']
 test args="":
     uv run pytest -v -x {{args}}
+
