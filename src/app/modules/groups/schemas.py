@@ -37,6 +37,10 @@ class GroupCreateRequest(BaseModel):
     description: str | None = Field(None, max_length=2048)
 
 
+class GroupCreateAdminRequest(GroupCreateRequest):
+    is_system: bool = False
+
+
 class GroupUpdateRequest(BaseModel):
     name: str | None = Field(None, min_length=1, max_length=32)
     description: str | None = Field(None, max_length=2048)

@@ -74,7 +74,9 @@ class RepositoryBase[TModel, TSchema]:
             stmt = stmt.offset(pagination.offset)
         stmt = stmt.limit(pagination.limit)
         result = await self.session.execute(stmt)
-        models = [self.response_schema.model_validate(obj) for obj in result.scalars().all()]
+        models = [
+            self.response_schema.model_validate(obj) for obj in result.scalars().all()
+        ]
         return PaginationResultSchema(
             items=models,
             total=total,
@@ -101,8 +103,19 @@ class RepositoryBase[TModel, TSchema]:
             return False
 
     async def delete(self, entity_id: str | UUID) -> None:
+        stmt = select(self.model).where(self.model.id == entity_id)
+        result = await self.session.execute(stmt)
+        entity = result.scalar_one_or_none()
+        if not entity:
+            raise NotFoundError(
+                detail=f"{self.model.__name__} with id {entity_id} not found"
+            )
         if SoftDeleteMixin in self.model.mro():
-            stmt = update(self.model).where(self.model.id == entity_id).values(deleted_at=utcnow())
+            stmt = (
+                update(self.model)
+                .where(self.model.id == entity_id)
+                .values(deleted_at=utcnow())
+            )
         else:
             stmt = delete(self.model).where(self.model.id == entity_id)
         await self.session.execute(stmt)

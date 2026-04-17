@@ -6,7 +6,7 @@ from app.modules.groups.models import GroupPermissionModel, UserGroupModel
 from app.modules.permissions.models import PermissionModel
 from app.modules.permissions.schemas import PermissionSchema
 from app.modules.users.models import UserModel
-from app.modules.users.schemas import UserSchema
+from app.modules.users.schemas import UserSchema, SuperUserCreateSchema
 from app.shared.base_repository import RepositoryBase
 
 
@@ -48,3 +48,6 @@ class UserRepository(RepositoryBase):
         )
         result = await self.session.execute(stmt)
         return [PermissionSchema.model_validate(x) for x in result.scalars().all()]
+
+    async def create_super_user(self, data: SuperUserCreateSchema) -> UserSchema:
+        return await super().create(data)

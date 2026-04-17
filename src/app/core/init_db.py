@@ -4,9 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.db_session import async_session
 from app.core.settings import get_settings
 from app.modules.auth.service import hash_password
-from app.modules.groups.models import GroupModel
 from app.modules.groups.permissions import GroupPermission
 from app.modules.groups.repository import GroupRepository
+from app.modules.groups.schemas import GroupCreateAdminRequest
 from app.modules.groups.service import GroupService
 from app.modules.permissions.permissions import PermissionPermission
 from app.modules.permissions.repository import PermissionRepository
@@ -14,6 +14,7 @@ from app.modules.permissions.schemas import PermissionCreateRequest
 from app.modules.permissions.service import PermissionService
 from app.modules.users.permissions import UserPermission
 from app.modules.users.repository import UserRepository
+from app.modules.users.schemas import SuperUserCreateSchema
 from app.modules.users.service import UserService
 from app.shared.base_model import BaseDBModel
 
@@ -38,7 +39,7 @@ async def setup_dev_db():
 async def _init_superuser(session: AsyncSession):
     service = UserService(repository=UserRepository(session))
     settings = get_settings()
-    superuser = await service.repository.get_super_user()
+    superuser = await service.get_super_user()
     if superuser:
         return
     user = await service.get_by_email(settings.ADMIN_EMAIL)
@@ -46,9 +47,9 @@ async def _init_superuser(session: AsyncSession):
         logger.info(f"User with email {settings.ADMIN_EMAIL} already exists")
         return
 
-    user_data = dict(
+    user_data = SuperUserCreateSchema(
         email=settings.ADMIN_EMAIL,
-        password=settings.ADMIN_PASSWORD.get_secret_value(),
+        password_hash=hash_password(settings.ADMIN_PASSWORD.get_secret_value()),
         phone_number=settings.ADMIN_PHONE_NUMBER,
         first_name="Super",
         last_name="Admin",
@@ -56,7 +57,7 @@ async def _init_superuser(session: AsyncSession):
         is_active=True,
         is_verified=True,
     )
-    await service.create(user_data)
+    await service.create_super_user(user_data)
     logger.info(f"Created superuser: {settings.ADMIN_EMAIL}")
 
 
@@ -91,12 +92,12 @@ async def _init_system_group(session: AsyncSession):
         logger.info("System group 'admins' already exists")
         return
 
-    group = GroupModel(
+    group = GroupCreateAdminRequest(
         name="admins",
         description="System administrators with full access",
         is_system=True,
     )
-    await service.repository.create(group)
+    await service.create(group)
     logger.info("Created system group: admins")
 
 
@@ -104,7 +105,7 @@ async def _assign_superuser_to_system_group(session: AsyncSession):
     user_service = UserService(repository=UserRepository(session))
     group_service = GroupService(repository=GroupRepository(session))
 
-    superuser = await user_service.repository.get_super_user()
+    superuser = await user_service.get_super_user()
     if not superuser:
         logger.warning("No superuser found to assign to system group")
         return
@@ -114,7 +115,7 @@ async def _assign_superuser_to_system_group(session: AsyncSession):
         logger.warning("System admins group not found")
         return
 
-    if await group_service.repository.user_in_group(superuser.id, admins_group.id):
+    if await group_service.user_in_group(superuser.id, admins_group.id):
         logger.info("Superuser already assigned to system admins group")
         return
 

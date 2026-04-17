@@ -12,7 +12,7 @@ from app.modules.groups.repository import GroupRepository
 from app.modules.groups.schemas import (
     GroupCreateRequest,
     GroupUpdateRequest,
-    GroupListResponse, GroupSchema,
+    GroupListResponse, GroupSchema, GroupCreateAdminRequest,
 )
 from app.shared.base_service import ServiceBase
 from app.shared.pagination import PaginationRequest, PaginationResultSchema
@@ -35,7 +35,7 @@ class GroupService(ServiceBase[GroupSchema]):
     ) -> PaginationResultSchema:
         return await super().get_list(pagination, filters)
 
-    async def create(self, data: GroupCreateRequest) -> GroupSchema:
+    async def create(self, data: GroupCreateRequest|GroupCreateAdminRequest) -> GroupSchema:
         if await self.repository.exists_by_name(data.name):
             raise GroupAlreadyExistsError(f"Group '{data.name}' already exists")
         return await self.repository.create(data)
@@ -52,6 +52,9 @@ class GroupService(ServiceBase[GroupSchema]):
         if group.is_system:
             raise SuperUserGroupError("Cannot delete system group")
         await self.repository.delete(group_id)
+
+    async def user_in_group(self, user_id: str | UUID, group_id: str | UUID) -> bool:
+        return await self.repository.user_in_group(user_id, group_id)
 
     async def add_user_to_group(self, user_id: str | UUID, group_id: str | UUID) -> None:
         if await self.repository.user_in_group(user_id, group_id):

@@ -35,6 +35,12 @@ class UserService(ServiceBase[UserModel]):
             return None
         return result.items[0]
 
+    async def get_super_user(self) -> UserSchema | None:
+        return await self.repository.get_super_user()
+
+    async def create_super_user(self, data: SuperUserCreateSchema) -> UserSchema:
+        return await self.repository.create_super_user(data)
+
     async def get_list(
         self, pagination: PaginationRequest, filters: dict[str, Any] | None = None
     ) -> PaginationResultSchema:

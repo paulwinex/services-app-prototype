@@ -44,6 +44,17 @@ class UserCreateDB(BaseModel):
     last_name: str | None = Field(None, max_length=100)
 
 
+class SuperUserCreateSchema(BaseModel):
+    email: EmailStr
+    phone_number: str
+    password_hash: str
+    first_name: str
+    last_name: str
+    is_active: bool = True
+    is_verified: bool = True
+    is_superuser: bool = True
+
+
 class UserUpdateRequest(BaseModel):
     email: str | None = None
     first_name: str | None = Field(None, max_length=100)
