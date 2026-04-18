@@ -4,7 +4,7 @@ from loguru import logger
 from sqlalchemy import inspect
 
 from app.events.router import event
-from app.events.schemas import ModelEvent
+from app.events.schemas import EntityEvent
 
 
 def _get_model_data(obj: Any) -> Any:
@@ -12,20 +12,20 @@ def _get_model_data(obj: Any) -> Any:
     return mapper.local_table.name
 
 
-@event('model.created')
-async def on_model_create(obj: Any) -> ModelEvent:
-    logger.debug(f'Model created event {obj}')
-    return ModelEvent(model_name=_get_model_data(obj), object_id=obj.id, event_type="create")
+@event('entity.created')
+async def on_model_create(obj: Any) -> EntityEvent:
+    logger.debug(f'Entity created event {obj}')
+    return EntityEvent(model_name=_get_model_data(obj), entity_id=obj.id, event_type="create")
 
 
 
-@event('model.updated')
-async def on_model_update(obj: Any) -> ModelEvent:
-    logger.debug(f'Model update event {obj}')
-    return ModelEvent(model_name=_get_model_data(obj), object_id=obj.id, event_type="update")
+@event('entity.updated')
+async def on_model_update(obj: Any) -> EntityEvent:
+    logger.debug(f'Entity update event {obj}')
+    return EntityEvent(model_name=_get_model_data(obj), entity_id=obj.id, event_type="update")
 
 
-@event('model.deleted')
-async def on_model_delete(obj: Any) -> ModelEvent:
-    logger.debug(f'Model delete event {obj}')
-    return ModelEvent(model_name=_get_model_data(obj), object_id=obj.id, event_type="delete")
+@event('entity.deleted')
+async def on_model_delete(obj: Any) -> EntityEvent:
+    logger.debug(f'Entity delete event {obj}')
+    return EntityEvent(model_name=_get_model_data(obj), entity_id=obj.id, event_type="delete")

@@ -11,21 +11,21 @@ class BaseEvent(BaseModel):
     timestamp: datetime = Field(default_factory=utcnow)
 
 
-class ModelEvent(BaseEvent):
+class EntityEvent(BaseEvent):
     model_name: str
-    object_id: str|UUID
+    entity_id: str | UUID
     event_type: str = None
 
 
-class ModelCreateEvent(ModelEvent):
+class EntityCreateEvent(EntityEvent):
     event_type: str = "create"
 
 
-class ModelUpdateEvent(ModelEvent):
+class EntityUpdateEvent(EntityEvent):
     event_type: str = "update"
 
 
-class ModelDeleteEvent(ModelEvent):
+class EntityDeleteEvent(EntityEvent):
     event_type: str = "delete"
 
 
