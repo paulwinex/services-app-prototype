@@ -1,8 +1,9 @@
+from fastapi import FastAPI
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db_session import async_session
-from app.core.settings import get_settings
+from app.core.settings import settings
 from app.modules.auth.service import hash_password
 from app.modules.groups.permissions import GroupPermission
 from app.modules.groups.repository import GroupRepository
@@ -19,7 +20,7 @@ from app.modules.users.service import UserService
 from app.shared.base_model import BaseDBModel
 
 
-async def init_database():
+async def init_database(app: FastAPI):
     async_session.setup()
     await setup_dev_db()  # skip for production
     async with async_session.get_session() as session:
@@ -38,7 +39,6 @@ async def setup_dev_db():
 
 async def _init_superuser(session: AsyncSession):
     service = UserService(repository=UserRepository(session))
-    settings = get_settings()
     superuser = await service.get_super_user()
     if superuser:
         return

@@ -2,12 +2,11 @@ from functools import cache
 
 from taskiq_redis import RedisAsyncResultBackend, RedisStreamBroker
 
-from app.core.settings import get_settings, Settings
+from app.core.settings import settings
 
 
 @cache
-def get_task_broker(settings: Settings = None) -> RedisStreamBroker:
-    settings = settings or get_settings()
+def get_task_broker() -> RedisStreamBroker:
     result_backend = RedisAsyncResultBackend(
         redis_url=settings.REDIS.URL,
     )

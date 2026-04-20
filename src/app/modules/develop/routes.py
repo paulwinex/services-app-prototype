@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.core.settings import Settings
+from app.core.settings import settings
 from .tasks import debug_task
 
 router = APIRouter()
@@ -15,7 +15,6 @@ async def send_debug_task(value: int):
 
 @router.get("/settings")
 async def get_settings():
-    settings = Settings()
     return settings.model_dump()
 
 

@@ -4,7 +4,7 @@ export PYTHONPATH := "./src"
 # run dev server localy
 [working-directory: 'src']
 run:
-    uv run uvicorn app.main:create_app --reload --factory --host 0.0.0.0 --port 8000
+    -uv run uvicorn app.main:create_app --reload --factory --host 0.0.0.0 --port 8000
 
 
 [working-directory: 'src']

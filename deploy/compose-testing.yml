@@ -1,3 +1,13 @@
+
+x-testing_envs: &testing_envs
+  APP_DB_HOST: "${APP_NAME}-db-testing"
+  TESTING: "true"
+  APP_DB_USER: "test"
+  APP_DB_PASSWORD: "test"
+  APP_DB_NAME: "test"
+  APP_ENABLE_EVENTS: false
+  APP_ENABLE_SCHEDULER: false
+
 services:
   app:
     image: ${APP_NAME}-app:testing
@@ -13,14 +23,9 @@ services:
     env_file:
       - ../.env
     environment:
-      APP_DB_HOST: "${APP_NAME}-db-testing"
-      TESTING: "true"
-      APP_DB_USER: "test"
-      APP_DB_PASSWORD: "test"
-      APP_DB_NAME: "test"
-      APP_EVENTS_ENABLE: false
-    volumes:
-      - ../src:/app/src
+      <<: *testing_envs
+#    volumes:
+#      - ../src:/app/src
     depends_on:
       db:
         condition: service_healthy

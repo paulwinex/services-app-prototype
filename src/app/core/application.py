@@ -7,14 +7,12 @@ from faststream.asgi import make_asyncapi_asgi
 from app.api.api_v1 import v1_router
 from app.core.events import get_event_router
 from app.core.exception_handlers import setup_exception_handlers
-from app.core.settings import get_settings
+from app.core.settings import settings
 from app.core.startup import lifespan
 from app.modules.develop import init_dev
 
 
 def create_app() -> FastAPI:
-    settings = get_settings()
-
     app = FastAPI(
         title=settings.NAME,
         version="0.0.1",
@@ -41,7 +39,7 @@ def create_app() -> FastAPI:
     # add main router
     app.include_router(v1_router)
     # add event router
-    if settings.EVENTS.ENABLE:
+    if settings.STATE.ENABLE_EVENTS:
         event_router = get_event_router()
         app.include_router(event_router)
         app.mount("/docs/asyncapi", make_asyncapi_asgi(AsyncAPI(event_router.broker)))

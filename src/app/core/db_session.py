@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from app.core.settings import get_settings
+from app.core.settings import settings
 
 
 class DatabaseSession:
@@ -20,21 +20,15 @@ class DatabaseSession:
         self._dsn = dsn
 
     @property
-    def settings(self):
-        if self._settings is None:
-            self._settings = get_settings()
-        return self._settings
-
-    @property
     def dsn(self) -> str:
         if self._dsn is None:
-            return self.settings.DB.dsn
+            return settings.DB.dsn
         return self._dsn
 
     def setup(self) -> None:
         self._engine = create_async_engine(
             self.dsn,
-            echo=self.settings.STATE.ECHO_DB,
+            echo=settings.STATE.ECHO_DB,
             pool_pre_ping=True,
             pool_size=10,
             max_overflow=20,

@@ -5,7 +5,7 @@ import bcrypt
 from jose import jwt, JWTError
 from jose.exceptions import ExpiredSignatureError
 
-from app.core.settings import get_settings
+from app.core.settings import settings
 from app.modules.auth.events import on_user_logged_in
 from app.modules.auth.schemas import TokenResponse
 from app.modules.users.exceptions import InvalidCredentialsError
@@ -15,7 +15,6 @@ from app.shared.utils import utcnow
 
 
 def create_auth_token(user_id: str) -> TokenResponse:
-    settings = get_settings()
     now = utcnow()
 
     access_expire = now + timedelta(seconds=settings.AUTH.JWT_ACCESS_EXPIRE_SECONDS)
@@ -57,7 +56,6 @@ def create_auth_token(user_id: str) -> TokenResponse:
 
 
 def decode_token(token: str, verify_exp: bool = True) -> dict:
-    settings = get_settings()
     return jwt.decode(
         token,
         settings.AUTH.JWT_SECRET.get_secret_value(),

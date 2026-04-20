@@ -58,16 +58,14 @@ class RedisSettings(BaseSettings):
         return f"redis://{self.HOST}:{self.PORT}/0"
 
 
-class EventsSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="APP_EVENTS_")
-    ENABLE: bool = True
-
-
 class StateSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="APP_")
 
     ECHO_DB: bool = False
     DEBUG: bool = False
+    TIMEZONE: str = "UTC"
+    ENABLE_EVENTS: bool = True
+    ENABLE_SCHEDULER: bool = True
 
 
 class Settings(BaseSettings):
@@ -88,13 +86,14 @@ class Settings(BaseSettings):
     DB: DatabaseSettings = Field(default_factory=DatabaseSettings)
     REDIS: RedisSettings = Field(default_factory=RedisSettings)
     NATS: NatsSettings = Field(default_factory=NatsSettings)
-    EVENTS: EventsSettings = Field(default_factory=EventsSettings)
     STATE: StateSettings = Field(default_factory=StateSettings)
 
     ADMIN_EMAIL: EmailStr
     ADMIN_PASSWORD: SecretStr
     ADMIN_PHONE_NUMBER: str
 
+
+settings = Settings()
 
 @cache
 def get_settings(**kwargs) -> Settings:
