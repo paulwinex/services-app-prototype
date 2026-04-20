@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import Query
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
-from app.events.schemas import BaseEvent
+from app.core.events.schemas import BaseEvent
 from app.shared.pagination import PaginationResultSchema, extra_filter_fields
 
 

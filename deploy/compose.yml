@@ -1,25 +1,49 @@
 name: "$APP_NAME"
 
+x-backend-env: &backend-env
+  POSTGRES_USER: ${APP_DB_USER}
+  POSTGRES_PASSWORD: ${APP_DB_PASSWORD}
+  POSTGRES_DB: ${APP_DB_NAME}
+  APP_DB_HOST: "${APP_NAME}-db"
+  APP_REDIS_HOST: "${APP_NAME}-redis"
+  APP_REDIS_PORT: "6379"
+  APP_NATS_HOST: "${APP_NAME}-nats"
+  APP_NATS_PORT: "4222"
+
+
+x-backend: &backend
+  image: ${APP_NAME}-app:${TAG:-dev}
+  env_file:
+    - ../.env
+  environment:
+    <<: *backend-env
+  restart: on-failure
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  networks:
+    - default
+
+
 services:
   app:
-    image: ${APP_NAME}-app:${TAG:-dev}
+    <<: *backend
+    container_name: "${APP_NAME}-app"
     build:
       context: ..
       dockerfile: deploy/Dockerfile
       target: production-image
-    container_name: "${APP_NAME}-app"
     ports:
       - "${APP_PORT:-8000}:8000"
-    env_file:
-      - ../.env
-    environment:
-      APP_DB_HOST: "${APP_NAME}-db"
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: always
-    networks:
-      - default
+
+
+  worker:
+    <<: *backend
+    container_name: "${APP_NAME}-wrk"
+    entrypoint: "/app/src/entrypoint-worker.sh"
+
 
   db:
     image: postgres:17
@@ -27,14 +51,12 @@ services:
     env_file:
       - ../.env
     environment:
-      POSTGRES_USER: ${APP_DB_USER}
-      POSTGRES_PASSWORD: ${APP_DB_PASSWORD}
-      POSTGRES_DB: ${APP_DB_NAME}
+      <<: *backend-env
     expose:
       - 5432
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
-    restart: always
+    restart: on-failure
     networks:
       - default
     healthcheck:
@@ -55,9 +77,27 @@ services:
     ports:
       - "${APP_NATS_PORT:-4222}:4222"
       - "${APP_NATS_MONITORING_PORT:-8222}:8222"
-    restart: always
+    restart: on-failure
     networks:
       - default
+
+  redis:
+    image: redis:7-alpine
+    container_name: "${APP_NAME}-redis"
+    volumes:
+      - ./data/redis:/data
+    restart: on-failure
+    expose:
+      - 6379
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping" ]
+      interval: 5s
+      timeout: 2s
+      retries: 3
+      start_period: 2s
+    networks:
+      - default
+
 
 networks:
   default:

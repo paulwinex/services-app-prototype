@@ -34,7 +34,7 @@ class DatabaseSession:
     def setup(self) -> None:
         self._engine = create_async_engine(
             self.dsn,
-            echo=self.settings.DEBUG,
+            echo=self.settings.STATE.ECHO_DB,
             pool_pre_ping=True,
             pool_size=10,
             max_overflow=20,

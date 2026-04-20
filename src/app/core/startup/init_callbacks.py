@@ -4,8 +4,8 @@ from fastapi import FastAPI
 import importlib
 
 
-def init_module_callbacks(app: FastAPI) -> None:
-    root = Path(__file__).parent.parent.joinpath('modules')
+def init_callback_modules(app: FastAPI) -> None:
+    root = Path(__file__).parent.parent.parent.joinpath('modules')
     for module_dir in root.iterdir():
         callbacks_file = module_dir.joinpath('callbacks.py')
         if callbacks_file.exists():

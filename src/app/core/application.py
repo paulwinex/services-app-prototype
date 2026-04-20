@@ -1,14 +1,15 @@
+import fastapi_swagger_dark as fsd
 from fastapi import FastAPI, Request, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from faststream import AsyncAPI
 from faststream.asgi import make_asyncapi_asgi
 
 from app.api.api_v1 import v1_router
+from app.core.events import get_event_router
 from app.core.exception_handlers import setup_exception_handlers
 from app.core.settings import get_settings
 from app.core.startup import lifespan
-from app.events.router import get_event_router
-import fastapi_swagger_dark as fsd
+from app.modules.develop import init_dev
 
 
 def create_app() -> FastAPI:
@@ -44,6 +45,8 @@ def create_app() -> FastAPI:
         event_router = get_event_router()
         app.include_router(event_router)
         app.mount("/docs/asyncapi", make_asyncapi_asgi(AsyncAPI(event_router.broker)))
+    # dev mode
+    init_dev(app)
 
     # root routes
     @app.get("/", include_in_schema=False)

@@ -4,7 +4,16 @@ export PYTHONPATH := "./src"
 # run dev server localy
 [working-directory: 'src']
 run:
-    uv run uvicorn app.main:create_app --reload --host 0.0.0.0 --port 8000
+    uv run uvicorn app.main:create_app --reload --factory --host 0.0.0.0 --port 8000
+
+
+[working-directory: 'src']
+worker:
+    uv run taskiq worker \
+    --workers 1 \
+    --fs-discover \
+    --app-dir app/modules \
+    app.core.tasks_broker:broker
 
 
 # create migrations

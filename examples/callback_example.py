@@ -1,7 +1,7 @@
 from faststream.nats.fastapi import Logger
 
-from app.events.router import get_event_router
-from app.events.schemas import EntityEvent
+from app.core.events import get_event_router
+from app.core.events import EntityEvent
 from app.modules.users.schemas import UserEvent
 
 router = get_event_router()

@@ -9,7 +9,7 @@ from app.modules.permissions.repository import PermissionRepository
 from app.modules.permissions.schemas import PermissionCreateRequest
 from app.modules.permissions.service import PermissionService
 from app.modules.users.permissions import UserPermission
-from app.core.init_db import _init_permissions
+from app.core.startup.init_db import _init_permissions
 
 
 async def create_test_permissions(async_db_session: AsyncSession):

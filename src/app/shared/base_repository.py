@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy import select, func, update, delete, Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.events import on_model_create, on_model_delete, on_model_update
+from app.shared.common_events import on_model_create, on_model_update, on_model_delete
 from app.shared.exceptions import NotFoundError, RequestValueError
 from app.shared.model_mixins import SoftDeleteMixin
 from app.shared.pagination import PaginationResultSchema, PaginationRequest

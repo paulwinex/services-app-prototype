@@ -1,6 +1,6 @@
 from loguru import logger
 
-from app.events.router import event
+from app.core.events.event_decorator import event
 from app.modules.users.schemas import UserSchema, UserEvent
 
 

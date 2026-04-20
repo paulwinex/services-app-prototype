@@ -1,4 +1,4 @@
-from app.events.router import get_event_router
+from app.core.events import get_event_router
 from app.modules.users.schemas import UserSchema
 
 roter = get_event_router()

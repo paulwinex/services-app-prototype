@@ -1,20 +1,9 @@
-from functools import cache, wraps
+from functools import wraps
 
-from faststream.nats.fastapi import NatsRouter
 from pydantic import BaseModel
 
+from app.core.events import get_event_router
 from app.core.settings import get_settings
-
-
-@cache
-def get_event_router() -> NatsRouter | None:
-    settings = get_settings()
-    return NatsRouter(
-        servers=[settings.EVENTS.URL],
-        schema_url="/asyncapi",
-        include_in_schema=True,
-    )
-
 
 
 def event(event_name: str):

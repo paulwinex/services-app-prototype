@@ -3,8 +3,8 @@ from typing import Any
 from loguru import logger
 from sqlalchemy import inspect
 
-from app.events.router import event
-from app.events.schemas import EntityEvent
+from app.core.events.event_decorator import event
+from app.core.events.schemas import EntityEvent
 
 
 def _get_model_data(obj: Any) -> Any:
