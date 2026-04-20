@@ -46,6 +46,7 @@ class NatsSettings(BaseSettings):
     def URL(self):
         return f"nats://{self.HOST}:{self.PORT}"
 
+
 class RedisSettings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="APP_REDIS_")
 
