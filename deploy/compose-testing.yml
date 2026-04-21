@@ -73,21 +73,5 @@ services:
       - testing
 
 
-  redis:
-    image: redis:7-alpine
-    container_name: "${APP_NAME}-redis"
-    restart: always
-    expose:
-      - 6379
-    healthcheck:
-      test: [ "CMD-SHELL", "redis-cli ping" ]
-      interval: 5s
-      timeout: 2s
-      retries: 3
-      start_period: 2s
-    networks:
-      - testing
-
-
 networks:
   testing:

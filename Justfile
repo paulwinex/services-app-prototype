@@ -9,7 +9,7 @@ run:
 
 [working-directory: 'src']
 worker:
-    uv run taskiq worker \
+    -uv run taskiq worker \
     --workers 1 \
     --fs-discover \
     --app-dir app/modules \

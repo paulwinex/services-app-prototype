@@ -20,6 +20,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     task_broker = get_task_broker()
     if not task_broker.is_worker_process:
         taskiq_fastapi.init(task_broker, "app.main:app")
+        logger.info('Start task broker')
+        await task_broker.startup()
         # init nats broker (for events)
         logger.info('Start event router')
         event_router = get_event_router()
@@ -41,10 +43,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     yield
     if not task_broker.is_worker_process:
+        logger.info('Stop task broker')
+        await task_broker.shutdown()
         logger.info('Stop event router')
         await event_router.broker.stop()
         if settings.STATE.ENABLE_SCHEDULER:
             logger.info('Stop scheduler')
             get_scheduler().shutdown()
-            logger.info('Start event router')
-            await event_router.broker.stop()
